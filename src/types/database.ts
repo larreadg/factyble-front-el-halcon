@@ -611,6 +611,39 @@ export interface Database {
         }[]
       }
       /**
+       * Buscador de la pantalla de productos. `clave` es el `producto_id` cuando
+       * lo hay y la descripción cuando no — la misma clave que agrupa el top de
+       * productos, y la que se le pasa a `ventas_por_producto`. Un término vacío
+       * no devuelve nada.
+       */
+      productos_buscar: {
+        Args: { p_busqueda: string; p_limite?: number }
+        Returns: {
+          clave: string
+          producto_id: string | null
+          descripcion: string | null
+          documentos: number
+          ultima_venta: string | null
+        }[]
+      }
+      /**
+       * Lo vendido de cada clave pedida en el rango. Devuelve una fila por clave,
+       * también las que no se vendieron (en cero). `descripcion` y
+       * `ultima_venta` salen de toda la historia del artículo, no del rango.
+       */
+      ventas_por_producto: {
+        Args: { p_desde: string; p_hasta: string; p_claves: string[]; p_moneda?: string }
+        Returns: {
+          clave: string
+          producto_id: string | null
+          descripcion: string
+          cantidad: number
+          documentos: number
+          total: number
+          ultima_venta: string | null
+        }[]
+      }
+      /**
        * Reasigna el orden de TODOS los premios de un sorteo, en el orden del
        * array. Es una RPC y no un `update` por fila porque
        * `unique (sorteo_id, orden)` no es deferrable: permutar dos órdenes choca
@@ -783,6 +816,8 @@ export type DashboardProducto =
 export type DashboardMarca = PublicSchema['Functions']['dashboard_top_marcas']['Returns'][number]
 export type DashboardEstablecimiento =
   PublicSchema['Functions']['dashboard_por_establecimiento']['Returns'][number]
+export type ProductoEncontrado = PublicSchema['Functions']['productos_buscar']['Returns'][number]
+export type VentaProducto = PublicSchema['Functions']['ventas_por_producto']['Returns'][number]
 
 /** Columna de `v_factura` por la que se puede ordenar la tabla. */
 export type FacturaSortField = 'fecha_emision' | 'numero_documento' | 'total'

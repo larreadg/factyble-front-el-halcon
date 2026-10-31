@@ -7,6 +7,7 @@ import { Sidebar, SidebarDrawer } from '@/layouts/Sidebar'
 const TITULOS: Record<string, string> = {
   '/': 'Inicio',
   '/facturas': 'Facturas',
+  '/productos': 'Ventas por producto',
 }
 
 export function AppLayout() {

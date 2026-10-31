@@ -15,6 +15,13 @@ const DashboardPage = lazy(() =>
 const FacturasPage = lazy(() =>
   import('@/features/facturas/FacturasPage').then((m) => ({ default: m.FacturasPage })),
 )
+// La consulta de ventas por producto. Aparte porque es una pantalla de
+// consulta puntual, que la mayoría de las sesiones no abre.
+const VentasProductosPage = lazy(() =>
+  import('@/features/productos/VentasProductosPage').then((m) => ({
+    default: m.VentasProductosPage,
+  })),
+)
 // Sorteos va aparte de las otras dos: es la única pantalla que escribe, y su
 // formulario no tiene por qué viajar en el bundle de quien sólo entra a mirar.
 const SorteosPage = lazy(() =>
@@ -129,6 +136,14 @@ export function App() {
             element={
               <Suspense fallback={<CargandoPagina />}>
                 <FacturasPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="productos"
+            element={
+              <Suspense fallback={<CargandoPagina />}>
+                <VentasProductosPage />
               </Suspense>
             }
           />

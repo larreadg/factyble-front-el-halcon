@@ -1,4 +1,4 @@
-import { FileText, Gift, LayoutDashboard, Users, X } from 'lucide-react'
+import { FileText, Gift, LayoutDashboard, Package, Users, X } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { NavLink } from 'react-router-dom'
 
@@ -14,6 +14,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
   { to: '/facturas', label: 'Facturas', icon: FileText },
+  { to: '/productos', label: 'Productos', icon: Package },
   { to: '/sorteos', label: 'Sorteos', icon: Gift },
   { to: '/padron', label: 'Padrón', icon: Users },
 ]
