@@ -1,10 +1,9 @@
-import { Loader2 } from 'lucide-react'
 import { useCallback } from 'react'
 
-import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
-import { SkeletonRows } from '@/components/ui/Skeleton'
+import { Paginacion } from '@/components/ui/Paginacion'
+import { EncabezadoPagina, PanelListado } from '@/components/ui/PanelListado'
 import {
   sanitizarBusqueda,
   useFacturas,
@@ -13,7 +12,6 @@ import {
 } from '@/features/facturas/api'
 import { DetalleFacturaPanel } from '@/features/facturas/components/DetalleFacturaPanel'
 import { FiltrosFacturas } from '@/features/facturas/components/FiltrosFacturas'
-import { Paginacion } from '@/features/facturas/components/Paginacion'
 import { TablaFacturas } from '@/features/facturas/components/TablaFacturas'
 import { useFacturasParams } from '@/features/facturas/useFacturasParams'
 import { formatRango } from '@/lib/dates'
@@ -63,66 +61,59 @@ export function FacturasPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-slate-900 sm:text-lg">Facturas electrónicas</h2>
-        <p className="text-sm text-slate-500">{formatRango(filtros.range)}</p>
-      </div>
+      <EncabezadoPagina
+        titulo="Facturas electrónicas"
+        detalle={formatRango(filtros.range)}
+        refrescando={isFetching && !isPending}
+      />
 
       <FiltrosFacturas filtros={filtros} onChange={onCambioFiltros} />
 
-      <Card className="overflow-hidden">
-        {/* Indicador sutil mientras se refresca una página ya visible. */}
-        <div className="flex h-8 items-center justify-end border-b border-slate-100 px-4">
-          {isFetching && !isPending ? (
-            <span className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Loader2 className="size-3 animate-spin" aria-hidden />
-              Actualizando…
-            </span>
-          ) : null}
-        </div>
-
-        {isPending ? <SkeletonRows rows={8} className="p-4" /> : null}
-
-        {!isPending && isError ? (
-          <ErrorState
-            description="No pudimos traer las facturas desde el servidor."
-            onRetry={() => void refetch()}
-          />
-        ) : null}
-
-        {!isPending && !isError && !hayFilas ? (
-          <EmptyState
-            title="Sin facturas en el período"
-            description={
-              descripcionSinCoincidencias ??
-              (hayFiltrosActivos
-                ? 'Probá ampliar el rango de fechas o quitar algún filtro.'
-                : 'No hay facturas emitidas en el rango seleccionado.')
-            }
-          />
-        ) : null}
-
-        {!isPending && !isError && hayFilas && data ? (
-          <TablaFacturas
-            filas={data.filas}
-            orden={filtros.orden}
-            direccion={filtros.direccion}
-            onOrdenar={setOrden}
-            onVerDetalle={setFacturaAbierta}
-            atenuada={isFetching}
-          />
-        ) : null}
-
-        {!isPending && !isError ? (
+      <PanelListado
+        cargando={isPending}
+        atenuado={isFetching}
+        error={
+          isError ? (
+            <ErrorState
+              description="No pudimos traer las facturas desde el servidor."
+              onRetry={() => void refetch()}
+            />
+          ) : null
+        }
+        vacio={
+          hayFilas ? null : (
+            <EmptyState
+              title="Sin facturas en el período"
+              description={
+                descripcionSinCoincidencias ??
+                (hayFiltrosActivos
+                  ? 'Probá ampliar el rango de fechas o quitar algún filtro.'
+                  : 'No hay facturas emitidas en el rango seleccionado.')
+              }
+            />
+          )
+        }
+        pie={
           <Paginacion
             pagina={filtros.pagina}
             tamanio={filtros.tamanio}
             total={data?.total ?? 0}
             onPagina={setPagina}
             onTamanio={(tamanio) => setFiltros({ tamanio })}
+            filas="facturas"
+          />
+        }
+      >
+        {data ? (
+          <TablaFacturas
+            filas={data.filas}
+            orden={filtros.orden}
+            direccion={filtros.direccion}
+            onOrdenar={setOrden}
+            onVerDetalle={setFacturaAbierta}
           />
         ) : null}
-      </Card>
+      </PanelListado>
 
       <DetalleFacturaPanel
         facturaId={facturaAbierta}

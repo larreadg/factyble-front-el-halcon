@@ -1,14 +1,20 @@
 import { ArrowRight } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { Select } from '@/components/ui/Select'
 import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton'
 import {
+  ORDEN_TOP_PRODUCTOS,
+  ORDEN_TOP_PRODUCTOS_DEFECTO,
+  ORDEN_TOP_PRODUCTOS_OPCIONES,
   usePorPeriodo,
   useResumen,
   useTopMarcas,
   useTopProductos,
   useTopReceptores,
   useUltimasFacturas,
+  type OrdenTopProductos,
 } from '@/features/dashboard/api'
 import { Bloque } from '@/features/dashboard/components/Bloque'
 import { EncabezadoPeriodo } from '@/features/dashboard/components/EncabezadoPeriodo'
@@ -33,10 +39,19 @@ export function DashboardPage() {
   const granularidad = granularidadPara(range)
   const dias = diasEnRango(range)
 
+  // El criterio del top de productos es estado local, no un parámetro de la URL
+  // como el rango: el rango define QUÉ se está mirando y por eso la vista se
+  // comparte con él puesto, mientras que esto es cómo se ordena un bloque. La
+  // consulta sí lo lleva en la queryKey, así que ir y volver entre criterios no
+  // vuelve a pegarle a la base.
+  const [ordenProductos, setOrdenProductos] = useState<OrdenTopProductos>(
+    ORDEN_TOP_PRODUCTOS_DEFECTO,
+  )
+
   const resumen = useResumen(range)
   const periodo = usePorPeriodo(range, granularidad)
   const receptores = useTopReceptores(range, 10)
-  const productos = useTopProductos(range, 10)
+  const productos = useTopProductos(range, 10, ordenProductos)
   const marcas = useTopMarcas(range, 10)
   const ultimas = useUltimasFacturas(5)
 
@@ -68,11 +83,26 @@ export function DashboardPage() {
       </Bloque>
 
       {/* Qué se vendió: los dos rankings del mismo dato a distinta altura, uno
-          al lado del otro para poder leerlos juntos. */}
+          al lado del otro para poder leerlos juntos. Los dos arrancan por monto
+          facturado, así que se comparan directo; el de productos además se puede
+          pasar a unidades. */}
       <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
         <Bloque
           title="Productos más vendidos"
-          description="Por unidades facturadas en el período"
+          // El encabezado dice el criterio vigente porque el ranking cambia de
+          // filas al cambiarlo, no sólo de orden: las diez que más facturan no
+          // son las diez que más rotan reacomodadas.
+          description={ORDEN_TOP_PRODUCTOS[ordenProductos].descripcion}
+          action={
+            <Select
+              aria-label="Criterio del ranking de productos"
+              value={ordenProductos}
+              onChange={(evento) => setOrdenProductos(evento.target.value as OrdenTopProductos)}
+              options={ORDEN_TOP_PRODUCTOS_OPCIONES}
+              className="py-1 pr-8 pl-2.5 text-xs"
+              contenedorClassName="shrink-0"
+            />
+          }
           isPending={productos.isPending}
           isError={productos.isError}
           error={productos.error}
@@ -81,14 +111,14 @@ export function DashboardPage() {
           onRetry={() => void productos.refetch()}
           skeleton={<SkeletonRows rows={8} />}
         >
-          {productos.data ? <TopProductos data={productos.data} /> : null}
+          {productos.data ? <TopProductos data={productos.data} orden={ordenProductos} /> : null}
         </Bloque>
 
         <Bloque
           title="Marcas más vendidas"
-          // El criterio es distinto al de productos (monto vs unidades) y la RPC
-          // deja fuera los ítems sin marca: las dos cosas se dicen acá, porque
-          // si no el bloque parece no cuadrar con el resto del dashboard.
+          // El criterio acá es fijo, y la RPC deja fuera los ítems sin marca: eso
+          // último se dice en el encabezado, porque si no lo que suma el bloque
+          // parece no cuadrar con el total facturado del período.
           description="Por monto facturado. No incluye ítems sin marca"
           isPending={marcas.isPending}
           isError={marcas.isError}

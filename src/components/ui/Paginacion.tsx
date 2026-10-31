@@ -1,9 +1,19 @@
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react'
+import type { ComponentType } from 'react'
 
+import { TAMANIOS_PAGINA } from '@/components/ui/paginacionOpciones'
 import { Select } from '@/components/ui/Select'
-import { TAMANIOS_PAGINA } from '@/features/facturas/useFacturasParams'
 import { cn } from '@/lib/cn'
 import { formatNumber } from '@/lib/format'
+
+/**
+ * Pie de paginación de una tabla.
+ *
+ * Vivía en `features/facturas/components/` y se mudó acá al aparecer la segunda
+ * tabla paginada del proyecto. Es puramente presentacional —no sabe qué está
+ * paginando— así que lo único que hubo que parametrizar es cómo se llaman las
+ * filas, para que la etiqueta del selector no diga "facturas" en el padrón.
+ */
 
 interface PaginacionProps {
   pagina: number
@@ -11,9 +21,23 @@ interface PaginacionProps {
   total: number
   onPagina: (pagina: number) => void
   onTamanio: (tamanio: number) => void
+  /**
+   * Cómo se llaman las filas, en plural y minúscula: "facturas", "personas".
+   * Sólo se usa para el nombre accesible del selector, que si no queda mudo.
+   */
+  filas?: string
+  tamanios?: readonly number[]
 }
 
-export function Paginacion({ pagina, tamanio, total, onPagina, onTamanio }: PaginacionProps) {
+export function Paginacion({
+  pagina,
+  tamanio,
+  total,
+  onPagina,
+  onTamanio,
+  filas = 'filas',
+  tamanios = TAMANIOS_PAGINA,
+}: PaginacionProps) {
   const totalPaginas = Math.max(Math.ceil(total / tamanio), 1)
   const paginaActual = Math.min(pagina, totalPaginas)
   const primeraFila = total === 0 ? 0 : (paginaActual - 1) * tamanio + 1
@@ -33,10 +57,10 @@ export function Paginacion({ pagina, tamanio, total, onPagina, onTamanio }: Pagi
           de <span className="font-medium text-slate-700 tabular-nums">{formatNumber(total)}</span>
         </p>
         <Select
-          aria-label="Facturas por página"
+          aria-label={`${filas.charAt(0).toUpperCase()}${filas.slice(1)} por página`}
           value={String(tamanio)}
           onChange={(event) => onTamanio(Number(event.target.value))}
-          options={TAMANIOS_PAGINA.map((valor) => ({
+          options={tamanios.map((valor) => ({
             value: String(valor),
             label: `${valor} por página`,
           }))}
@@ -86,7 +110,7 @@ function BotonPagina({
   label: string
   onClick: () => void
   disabled: boolean
-  icon: React.ComponentType<{ className?: string }>
+  icon: ComponentType<{ className?: string }>
 }) {
   return (
     <button

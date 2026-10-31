@@ -1,0 +1,32 @@
+# Despliegue en Netlify.
+#
+# Dos cosas y ninguna más:
+#
+#  1. El fallback de SPA. Las rutas son de cliente (`/sorteos/3`,
+#     `/sorteo/resultado/QZT5…`): sin esto, entrar directo a cualquiera —o
+#     recargar— devuelve 404 porque en `dist` no existe ese archivo.
+#
+#  2. La Edge Function `resultado-og` se declara sola, con `export const config`
+#     en su propio archivo. No hace falta listarla acá.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# El service worker y el manifiesto NO se cachean en el CDN: si un deploy queda
+# detrás de un `sw.js` viejo, los clientes se quedan con la app anterior y no hay
+# forma de sacarlos de ahí desde el navegador.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

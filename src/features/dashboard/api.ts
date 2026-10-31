@@ -14,14 +14,47 @@ import type {
 /** Única moneda del cliente por ahora; las RPC la reciben como parámetro. */
 export const MONEDA = 'PYG'
 
+/**
+ * Criterio del ranking de productos. Son dos preguntas distintas y no dos vistas
+ * del mismo dato: `'total'` contesta qué artículo MUEVE más plata y `'cantidad'`
+ * cuál ROTA más. Un artículo caro que sale de a uno encabeza el primero y no
+ * figura en el segundo.
+ *
+ * Los valores son exactamente los que acepta la RPC; si llegara otro, la función
+ * cae a `'total'` en vez de fallar, pero el tipo existe para que eso no pase.
+ */
+export type OrdenTopProductos = 'total' | 'cantidad'
+
+/** El default de la pantalla, y también el de la RPC. */
+export const ORDEN_TOP_PRODUCTOS_DEFECTO: OrdenTopProductos = 'total'
+
+/** Etiqueta del selector, y lo que dice el encabezado del bloque, por criterio. */
+export const ORDEN_TOP_PRODUCTOS: Record<
+  OrdenTopProductos,
+  { label: string; descripcion: string }
+> = {
+  total: { label: 'Por facturación', descripcion: 'Por monto facturado en el período' },
+  cantidad: { label: 'Por unidades', descripcion: 'Por unidades facturadas en el período' },
+}
+
+/**
+ * Las opciones del selector, en el orden en que se ofrecen. Va aparte del
+ * `Record` porque un objeto no promete orden de claves y acá el orden es parte
+ * de la UI: primero el default.
+ */
+export const ORDEN_TOP_PRODUCTOS_OPCIONES: { value: OrdenTopProductos; label: string }[] = [
+  { value: 'total', label: ORDEN_TOP_PRODUCTOS.total.label },
+  { value: 'cantidad', label: ORDEN_TOP_PRODUCTOS.cantidad.label },
+]
+
 const claves = {
   resumen: (range: DateRange) => ['dashboard', 'resumen', range.desde, range.hasta] as const,
   periodo: (range: DateRange, granularidad: Granularidad) =>
     ['dashboard', 'periodo', range.desde, range.hasta, granularidad] as const,
   receptores: (range: DateRange, limite: number) =>
     ['dashboard', 'receptores', range.desde, range.hasta, limite] as const,
-  productos: (range: DateRange, limite: number) =>
-    ['dashboard', 'productos', range.desde, range.hasta, limite] as const,
+  productos: (range: DateRange, limite: number, orden: OrdenTopProductos) =>
+    ['dashboard', 'productos', range.desde, range.hasta, limite, orden] as const,
   marcas: (range: DateRange, limite: number) =>
     ['dashboard', 'marcas', range.desde, range.hasta, limite] as const,
   ultimas: (limite: number) => ['dashboard', 'ultimas-facturas', limite] as const,
@@ -84,16 +117,26 @@ export function useTopReceptores(range: DateRange, limite = 10) {
  *
  * Agrupa por código de producto cuando lo hay, así que el mismo artículo con dos
  * descripciones distintas llega como una sola fila.
+ *
+ * `orden` va en la queryKey, no se ordena en el cliente: el ranking son las diez
+ * primeras filas de la base, y las diez por monto no son un reordenamiento de las
+ * diez por unidades — son otras filas. Ordenar acá mostraría el top de unidades
+ * acomodado por plata, que es una lista sin sentido.
  */
-export function useTopProductos(range: DateRange, limite = 10) {
+export function useTopProductos(
+  range: DateRange,
+  limite = 10,
+  orden: OrdenTopProductos = ORDEN_TOP_PRODUCTOS_DEFECTO,
+) {
   return useQuery({
-    queryKey: claves.productos(range, limite),
+    queryKey: claves.productos(range, limite, orden),
     queryFn: async (): Promise<DashboardProducto[]> => {
       const { data, error } = await supabase.rpc('dashboard_top_productos', {
         p_desde: range.desde,
         p_hasta: range.hasta,
         p_limite: limite,
         p_moneda: MONEDA,
+        p_orden: orden,
       })
       if (error) throw error
       return data
@@ -102,10 +145,10 @@ export function useTopProductos(range: DateRange, limite = 10) {
 }
 
 /**
- * Top de marcas del período, por MONTO facturado — criterio distinto al de
- * `useTopProductos`, que va por unidades. No es un descuido: un artículo se juzga
- * por rotación y una marca por la plata que mueve. Cada bloque lo dice en su
- * encabezado para que la diferencia no se lea como inconsistencia.
+ * Top de marcas del período, por MONTO facturado — el mismo criterio con el que
+ * arranca `useTopProductos`, que además se puede cambiar a unidades. Acá el
+ * criterio es fijo: una marca se juzga por la plata que mueve, y el selector
+ * existe en productos porque ahí la rotación sí es una pregunta corriente.
  *
  * La RPC agrupa por el CÓDIGO de marca y no por el texto congelado en cada ítem:
  * una marca renombrada en el maestro de PVTA aparecería partida en dos. Deja

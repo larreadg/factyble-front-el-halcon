@@ -1,25 +1,47 @@
+import type { OrdenTopProductos } from '@/features/dashboard/api'
 import { formatCurrency, formatNumber, toNumber } from '@/lib/format'
 import type { DashboardProducto } from '@/types/database'
 
 /**
- * Ordenado por cantidad vendida, que es lo que responde "más vendidos"; el total
- * facturado va al lado porque el artículo que más sale no es siempre el que más
- * factura. El relleno de la fila es proporcional a la cantidad del primero.
+ * El ranking de productos del período, con el criterio que eligió el usuario en
+ * el encabezado del bloque (`orden`): por monto facturado o por unidades.
+ *
+ * Dos cosas siguen al criterio, y las dos por el mismo motivo —que la lista no
+ * se lea desordenada—:
+ *
+ *  - el ANCHO de la barra, que es proporcional a la métrica que ordena. Si
+ *    midiera la otra, las filas se verían fuera de orden;
+ *  - cuál de los dos números va DESTACADO a la derecha. El que no está ahí baja
+ *    a la línea de abajo: los dos se ven siempre, porque el artículo que más
+ *    factura y el que más rota rara vez son el mismo y la comparación es justo
+ *    lo que se está mirando.
  *
  * La RPC agrupa por código de producto cuando lo hay, así que el mismo artículo
  * facturado con descripciones distintas llega como UNA fila, con la descripción
  * del documento más reciente. Las facturas sin código agrupan por descripción y
  * llegan con `producto_id` en null.
  */
-export function TopProductos({ data }: { data: DashboardProducto[] }) {
-  const maximo = Math.max(...data.map((fila) => toNumber(fila.cantidad)), 1)
+export function TopProductos({
+  data,
+  orden,
+}: {
+  data: DashboardProducto[]
+  orden: OrdenTopProductos
+}) {
+  const porCantidad = orden === 'cantidad'
+  const metrica = (fila: DashboardProducto) => toNumber(porCantidad ? fila.cantidad : fila.total)
+  const maximo = Math.max(...data.map(metrica), 1)
 
   return (
     <ol className="-mx-2">
       {data.map((fila, indice) => {
         const cantidad = toNumber(fila.cantidad)
+        const total = toNumber(fila.total)
         const documentos = toNumber(fila.documentos)
-        const proporcion = Math.max((cantidad / maximo) * 100, cantidad > 0 ? 1.5 : 0)
+        const valor = porCantidad ? cantidad : total
+        const proporcion = Math.max((valor / maximo) * 100, valor > 0 ? 1.5 : 0)
+        const unidades = `${formatNumber(cantidad)} ${cantidad === 1 ? 'unidad' : 'unidades'}`
+        const facturas = `${formatNumber(documentos)} ${documentos === 1 ? 'factura' : 'facturas'}`
 
         return (
           <li
@@ -46,12 +68,11 @@ export function TopProductos({ data }: { data: DashboardProducto[] }) {
                   {fila.descripcion ?? 'Sin descripción'}
                 </p>
                 <p className="text-xs text-slate-500 tabular-nums">
-                  {formatNumber(cantidad)} {cantidad === 1 ? 'unidad' : 'unidades'} ·{' '}
-                  {formatNumber(documentos)} {documentos === 1 ? 'factura' : 'facturas'}
+                  {porCantidad ? formatCurrency(total) : unidades} · {facturas}
                 </p>
               </div>
               <span className="shrink-0 text-sm font-medium text-slate-900 tabular-nums">
-                {formatCurrency(fila.total)}
+                {porCantidad ? unidades : formatCurrency(total)}
               </span>
             </div>
           </li>

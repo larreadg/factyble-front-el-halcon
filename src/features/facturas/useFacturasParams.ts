@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
+import { TAMANIOS_PAGINA } from '@/components/ui/paginacionOpciones'
+
 import type {
   AmbitoBusqueda,
   FacturasFiltros,
@@ -10,7 +12,6 @@ import type {
 import { isIsoDate, resolvePreset, type DateRange } from '@/lib/dates'
 import type { FacturaSortField } from '@/types/database'
 
-export const TAMANIOS_PAGINA = [10, 25, 50] as const
 const TAMANIO_DEFAULT = 25
 
 const ORDENES: FacturaSortField[] = ['fecha_emision', 'numero_documento', 'total']

@@ -6,7 +6,10 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist', 'dev-dist', 'node_modules'] },
+  // `netlify` corre en Deno, con sus propios globals y sus imports remotos: no
+  // está en ningún tsconfig de este proyecto y el `projectService` fallaría al
+  // abrirlo. Netlify lo verifica al desplegar.
+  { ignores: ['dist', 'dev-dist', 'node_modules', 'netlify'] },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

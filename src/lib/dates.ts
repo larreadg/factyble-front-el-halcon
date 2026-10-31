@@ -207,10 +207,24 @@ export function minutosDesde(value: string | null | undefined): number | null {
   return (Date.now() - date.getTime()) / 60000
 }
 
+/**
+ * `dd/MM/yyyy` de una fecha CALENDARIO (`yyyy-MM-dd`), como las que devuelven las
+ * columnas `date` de `sorteo`.
+ *
+ * No es lo mismo que `formatDate`, y la diferencia se ve: `formatDate` espera un
+ * `timestamptz` y lo lleva a Asunción. Pasarle un `'2026-09-23'` a secas lo hace
+ * pasar por `parseISO`, que interpreta una fecha sin hora en la zona del
+ * NAVEGADOR; abierta desde España, esa fecha se convierte a Asunción y retrocede
+ * un día. Acá el día se ancla en Asunción antes de formatear, así que un sorteo
+ * que empieza el 23 dice 23 desde cualquier parte del mundo.
+ */
+export function formatFechaCalendario(value: IsoDate | null | undefined): string {
+  if (!isIsoDate(value)) return '—'
+  return formatDate(startOfDayAsuncion(value).toISOString())
+}
+
 /** Rango legible: `01/09/2026 – 20/09/2026`. */
 export function formatRango(range: DateRange): string {
-  if (range.desde === range.hasta) return formatDate(startOfDayAsuncion(range.desde).toISOString())
-  return `${formatDate(startOfDayAsuncion(range.desde).toISOString())} – ${formatDate(
-    startOfDayAsuncion(range.hasta).toISOString(),
-  )}`
+  if (range.desde === range.hasta) return formatFechaCalendario(range.desde)
+  return `${formatFechaCalendario(range.desde)} – ${formatFechaCalendario(range.hasta)}`
 }

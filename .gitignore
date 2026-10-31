@@ -29,3 +29,10 @@ dev-dist
 # Local env
 .env.local
 .env*.local
+
+# Restos del CLI de Supabase: este repo no versiona SQL, el esquema vive en el
+# backend. Lo unico que aparece aca es la cache del `supabase link`.
+supabase/.temp
+
+# Local Netlify folder
+.netlify

@@ -2,7 +2,6 @@ import { ChevronDown, LogOut, Menu, User as UserIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { useAuth } from '@/auth/AuthContext'
-import { SyncIndicator } from '@/features/sync/SyncIndicator'
 import { cn } from '@/lib/cn'
 
 export function Header({ titulo, onAbrirMenu }: { titulo: string; onAbrirMenu: () => void }) {
@@ -26,7 +25,6 @@ export function Header({ titulo, onAbrirMenu }: { titulo: string; onAbrirMenu: (
       />
       <span className="hidden h-6 w-px shrink-0 bg-slate-200 sm:block" aria-hidden />
 
-      <SyncIndicator className="hidden sm:flex" />
       <MenuUsuario />
     </header>
   )

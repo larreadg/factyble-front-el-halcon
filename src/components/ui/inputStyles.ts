@@ -1,6 +1,15 @@
 import { cn } from '@/lib/cn'
 
 /** Estilos base de los campos de texto, compartidos por `Input` y los campos con ícono. */
+/**
+ * El `id` del texto de ayuda o error que acompaña a un campo, derivado del `id`
+ * del control. Que la convención viva acá y no repetida en cada formulario es lo
+ * que evita que un `aria-describedby` apunte a un `id` que no existe.
+ */
+export function describedBy(id: string, tiene: boolean): string | undefined {
+  return tiene ? `${id}-ayuda` : undefined
+}
+
 export const inputBaseClass = cn(
   'block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-slate-900',
   'ring-1 ring-slate-200 ring-inset placeholder:text-slate-400',

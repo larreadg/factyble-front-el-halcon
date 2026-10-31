@@ -56,8 +56,17 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Las respuestas de Supabase llevan datos de facturación y sesión:
-            // nunca se guardan en caché.
+            // nunca se guardan en caché. Cubre también la Edge Function del
+            // formulario público, que vive en el mismo dominio: un alta servida
+            // desde caché sería un alta que nunca llegó a la base.
             urlPattern: ({ url }) => url.hostname.endsWith('.supabase.co'),
+            handler: 'NetworkOnly',
+          },
+          {
+            // El widget de Turnstile se pide siempre fresco: un script de
+            // verificación servido desde una caché vieja falla de formas que no
+            // dejan rastro en ningún lado.
+            urlPattern: ({ url }) => url.hostname === 'challenges.cloudflare.com',
             handler: 'NetworkOnly',
           },
         ],

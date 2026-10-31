@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import type { CondicionVenta, EstadoSifen } from '@/types/database'
 
-type Tone = 'verde' | 'rojo' | 'azul' | 'celeste' | 'neutro' | 'ambar'
+export type Tone = 'verde' | 'rojo' | 'azul' | 'celeste' | 'neutro' | 'ambar'
 
 const TONES: Record<Tone, string> = {
   verde: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
